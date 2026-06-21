@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dust Protocol — A CS2 WebXR Experience</title>
+
+    <!-- A-Frame: the framework the course recommends for WebXR (HTML + JS, built on three.js) -->
+    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+
+  <body>
+    <!-- ===================================================================
+         WELCOME SCREEN
+         Shows before the 3D scene loads. I added this after user testing
+         because people were confused about what to do when the scene just
+         appeared. (See presentation -> User Testing)
+    ==================================================================== -->
+    <div id="welcome">
+      <div id="welcome-card">
+        <p class="kicker">A CS2 WEBXR EXPERIENCE</p>
+        <h1>DUST PROTOCOL</h1>
+        <p class="tagline">
+          You're on the bombsite. The C4 is planted and the clock is ticking.
+          Inspect the weapons on the table, learn the kit, then
+          <strong>defuse the bomb</strong> before the round ends.
+        </p>
+
+        <div class="controls">
+          <div class="ctrl">
+            <span class="ctrl-title">On a computer</span>
+            Drag the mouse to look around · <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to walk · click objects
+          </div>
+          <div class="ctrl">
+            <span class="ctrl-title">In VR</span>
+            Press the goggles button (bottom-right) · point and trigger to interact
+          </div>
+        </div>
+
+        <button id="enter-btn">DEPLOY</button>
+        <p class="vr-note">
+          Tip: for VR on a desktop, install the free
+          <em>Immersive Web Emulator</em> Chrome extension (from the course slides).
+        </p>
+      </div>
+    </div>
+
+    <!-- HUD that lives on top of the 3D scene -->
+    <div id="hud" class="hidden">
+      <div id="round-timer">ROUND: <span id="timer">--</span></div>
+      <div id="progress">WEAPONS INSPECTED: <span id="count">0</span> / 3</div>
+      <div id="hint">Click a glowing weapon to inspect it.</div>
+    </div>
+
+    <!-- ===================================================================
+         THE 3D SCENE
+         I kept the whole scene in one index.html on purpose — it's a single
+         space, so splitting it across files would have made it harder to
+         read and reason about. CSS and JS are in separate files only because
+         it keeps the markup clean.
+    ==================================================================== -->
+    <a-scene
+      fog="type: linear; color: #d9c08a; near: 12; far: 40"
+      background="color: #cdb888"
+      renderer="colorManagement: true; antialias: true"
+      vr-mode-ui="enabled: true"
+      loading-screen="dotsColor: #f0a500; backgroundColor: #1a1a1a"
+    >
+      <!-- ---------- ASSETS (mixins keep repeated objects DRY) ---------- -->
+      <a-assets>
+        <!-- A reusable "dusty crate" look used all over the map -->
+        <a-mixin
+          id="crate"
+          geometry="primitive: box"
+          material="color: #8a6d3b; roughness: 1"
+        ></a-mixin>
+        <!-- The faint pulsing glow ring placed under each interactable -->
+        <a-mixin
+          id="glow"
+          geometry="primitive: ring; radiusInner: 0.28; radiusOuter: 0.42"
+          material="color: #f0a500; shader: flat; side: double; opacity: 0.9"
+          rotation="-90 0 0"
+          animation="property: scale; to: 1.25 1.25 1.25; dir: alternate; dur: 900; loop: true"
+        ></a-mixin>
+      </a-assets>
+
+      <!-- ---------- LIGHTING (warm desert key + cool fill) ---------- -->
+      <a-entity light="type: ambient; color: #9a9078; intensity: 1.1"></a-entity>
+      <a-entity
+        light="type: directional; color: #fff0d0; intensity: 1.35; castShadow: true"
+        position="-6 10 4"
+      ></a-entity>
+      <a-entity
+        light="type: point; color: #ff5a3c; intensity: 0.6; distance: 8"
+        position="0 1 -5"
+      ></a-entity>
+
+      <!-- ---------- GROUND + SKY ---------- -->
+      <a-sky color="#b9a06a"></a-sky>
+      <a-plane
+        position="0 0 0"
+        rotation="-90 0 0"
+        width="60"
+        height="60"
+        material="color: #c2a868; roughness: 1"
+      ></a-plane>
+
+      <!-- ====================== THE BOMBSITE (B SITE) ====================== -->
+      <!-- Big sandstone walls that frame the play space, Dust2 style -->
+      <a-box position="0 3 -14" width="28" height="6" depth="0.6" material="color: #cdb27a; roughness: 1"></a-box>
+      <a-box position="-14 3 0" width="0.6" height="6" depth="28" material="color: #c4a96f; roughness: 1"></a-box>
+      <a-box position="14 3 0" width="0.6" height="6" depth="28" material="color: #c4a96f; roughness: 1"></a-box>
+
+      <!-- A famous-feeling double-stack of crates -->
+      <a-entity mixin="crate" position="-7 0.75 -9" scale="1.5 1.5 1.5"></a-entity>
+      <a-entity mixin="crate" position="-7 2.1 -9" scale="1.4 1.2 1.4"></a-entity>
+      <a-entity mixin="crate" position="8 0.75 -8" scale="1.5 1.5 1.5" rotation="0 22 0"></a-entity>
+      <a-entity mixin="crate" position="6 0.75 5" scale="1.3 1.3 1.3" rotation="0 -15 0"></a-entity>
+
+      <!-- Barrels for flavour -->
+      <a-cylinder position="9.5 0.6 -3" radius="0.55" height="1.2" material="color: #b23b2e; roughness: 0.8"></a-cylinder>
+      <a-cylinder position="-9 0.6 3" radius="0.55" height="1.2" material="color: #3b6e47; roughness: 0.8"></a-cylinder>
+
+      <!-- The painted "B" site marker on the wall -->
+      <a-text value="B" position="0 3.4 -13.6" align="center" width="14" color="#7a3b1f"></a-text>
+
+      <!-- ====================== WEAPON TABLE ====================== -->
+      <!-- The three weapons sit on a table the player walks up to. -->
+      <a-box position="0 0.5 -5" width="5" height="0.18" depth="1.4" material="color: #5b4a2f; roughness: 1"></a-box>
+      <a-box position="-2.2 0.25 -5" width="0.15" height="0.5" depth="0.15" material="color: #4a3c26"></a-box>
+      <a-box position="2.2 0.25 -5" width="0.15" height="0.5" depth="0.15" material="color: #4a3c26"></a-box>
+
+      <!-- ---------- WEAPON 1: AK-47 (built from primitives) ---------- -->
+      <a-entity
+        id="ak"
+        class="clickable weapon"
+        position="-1.6 0.75 -5"
+        data-name="AK-47"
+        data-info="AK-47 — The T-side workhorse.\nOne tap to the head and it's over.
+A wall of recoil after the third bullet, so spray control is everything."
+        inspectable="hover: #cdb27a"
+      >
+        <!-- receiver / body -->
+        <a-box width="0.9" height="0.12" depth="0.06" material="color: #6b4a2a; roughness: 0.6"></a-box>
+        <!-- barrel -->
+        <a-box position="0.6 0.02 0" width="0.4" height="0.05" depth="0.04" material="color: #2b2b2b; metalness: 0.7"></a-box>
+        <!-- magazine (the AK's curved mag, faked with a tilted box) -->
+        <a-box position="-0.05 -0.16 0" width="0.12" height="0.26" depth="0.05" rotation="0 0 18" material="color: #3a2a1a"></a-box>
+        <!-- stock -->
+        <a-box position="-0.6 -0.04 0" width="0.35" height="0.1" depth="0.04" material="color: #6b4a2a"></a-box>
+        <!-- glow ring under it -->
+        <a-entity class="glow-ring" mixin="glow" position="0 -0.74 0"></a-entity>
+      </a-entity>
+
+      <!-- ---------- WEAPON 2: AWP (the big green sniper) ---------- -->
+      <a-entity
+        id="awp"
+        class="clickable weapon"
+        position="0 0.78 -5"
+        data-name="AWP"
+        data-info="AWP — One shot, one kill.\nThe most feared rifle in the game and the most expensive.
+Miss, and you've handed the enemy $4750."
+        inspectable="hover: #cdb27a"
+      >
+        <a-box width="1.3" height="0.1" depth="0.07" material="color: #2f4a32; roughness: 0.5"></a-box>
+        <!-- long barrel -->
+        <a-box position="0.9 0 0" width="0.6" height="0.04" depth="0.03" material="color: #1f1f1f; metalness: 0.8"></a-box>
+        <!-- scope -->
+        <a-cylinder position="0.1 0.12 0" radius="0.05" height="0.4" rotation="0 0 90" material="color: #111; metalness: 0.6"></a-cylinder>
+        <a-box position="-0.7 -0.02 0" width="0.4" height="0.12" depth="0.05" material="color: #2f4a32"></a-box>
+        <a-entity class="glow-ring" mixin="glow" position="0 -0.77 0"></a-entity>
+      </a-entity>
+
+      <!-- ---------- WEAPON 3: Desert Eagle ---------- -->
+      <a-entity
+        id="deagle"
+        class="clickable weapon"
+        position="1.6 0.7 -5"
+        data-name="Desert Eagle"
+        data-info="Desert Eagle — The hand cannon.\nHigh risk, high reward: a headshot kills at almost any range,
+but the recoil punishes panic. Eco-round heartbreaker."
+        inspectable="hover: #cdb27a"
+      >
+        <a-box width="0.45" height="0.16" depth="0.06" material="color: #c9a227; metalness: 0.6; roughness: 0.4"></a-box>
+        <a-box position="-0.05 -0.18 0" width="0.12" height="0.24" depth="0.05" rotation="0 0 8" material="color: #1a1a1a"></a-box>
+        <a-box position="0.28 0.02 0" width="0.16" height="0.05" depth="0.04" material="color: #1a1a1a; metalness: 0.7"></a-box>
+        <a-entity class="glow-ring" mixin="glow" position="0 -0.68 0"></a-entity>
+      </a-entity>
+
+      <!-- A board on the table that tells you what to do -->
+      <a-entity position="0 1.4 -5.6">
+        <a-plane width="2.6" height="0.5" material="color: #1a1a1a; opacity: 0.85" position="0 0 0"></a-plane>
+        <a-text value="INSPECT ALL THREE WEAPONS" align="center" width="3.4" color="#f0a500" position="0 0.07 0.01"></a-text>
+        <a-text value="then defuse the bomb to win" align="center" width="2.8" color="#e8dcc4" position="0 -0.12 0.01"></a-text>
+      </a-entity>
+
+      <!-- ====================== THE INFO PANEL ====================== -->
+      <!-- Floats in front of the camera; filled in by JS when you click a weapon -->
+      <a-entity id="info-panel" visible="false" position="0 2.2 -3">
+        <a-plane width="3.2" height="1.3" material="color: #0c0c0c; opacity: 0.9; side: double"></a-plane>
+        <a-plane width="3.2" height="0.06" position="0 0.6 0.01" material="color: #f0a500; shader: flat"></a-plane>
+        <a-text id="info-title" value="" align="center" width="3.4" color="#f0a500" position="0 0.42 0.02"></a-text>
+        <a-text id="info-body" value="" align="center" width="2.7" wrap-count="34" color="#e8dcc4" position="0 -0.05 0.02" baseline="top"></a-text>
+      </a-entity>
+
+      <!-- ====================== THE C4 BOMB ====================== -->
+      <!-- Hidden/non-interactive until all 3 weapons are inspected. -->
+      <a-entity id="bomb" position="6 0.4 5" rotation="0 -15 0">
+        <a-box width="0.5" height="0.28" depth="0.36" material="color: #2a2a2a; roughness: 0.7"></a-box>
+        <!-- the famous red blinking light -->
+        <a-sphere
+          id="bomb-light"
+          position="0 0.2 0.18"
+          radius="0.05"
+          material="color: #ff2a2a; shader: flat"
+          animation="property: material.opacity; from: 1; to: 0.1; dir: alternate; dur: 500; loop: true"
+        ></a-sphere>
+        <!-- countdown number above the bomb -->
+        <a-text id="bomb-timer" value="" align="center" width="6" color="#ff2a2a" position="0 0.8 0"></a-text>
+      </a-entity>
+
+      <!-- the actual clickable defuse zone (kept separate so it can be locked) -->
+      <a-cylinder
+        id="defuse"
+        class="locked"
+        position="6 0.05 5"
+        radius="0.9"
+        height="0.05"
+        material="color: #444; opacity: 0.5; shader: flat"
+        visible="false"
+      ></a-cylinder>
+      <a-text id="defuse-label" value="" align="center" width="5" color="#3cff6a" position="6 1.4 5"></a-text>
+
+      <!-- ====================== WIN / RESULT BANNER ====================== -->
+      <a-entity id="result" visible="false" position="0 2.5 -4">
+        <a-plane width="6" height="1.6" material="color: #06210f; opacity: 0.95"></a-plane>
+        <a-text id="result-text" value="" align="center" width="5.5" wrap-count="30" color="#3cff6a" position="0 0 0.02"></a-text>
+      </a-entity>
+
+      <!-- ====================== PLAYER RIG ====================== -->
+      <!-- This rig works for BOTH platforms:
+           - Desktop: WASD + look-controls (mouse)
+           - VR: A-Frame swaps in the headset camera + controllers automatically
+           A raycaster cursor lets you click on desktop AND point in VR. -->
+      <a-entity id="rig" position="0 0 2" movement-controls="speed: 0.18">
+        <a-entity
+          camera
+          look-controls="pointerLockEnabled: false"
+          position="0 1.6 0"
+        >
+          <!-- gaze/mouse cursor that lights up over clickable objects -->
+          <a-cursor
+            fuse="false"
+            raycaster="objects: .clickable"
+            material="color: #f0a500; shader: flat"
+            geometry="primitive: ring; radiusInner: 0.012; radiusOuter: 0.02"
+          ></a-cursor>
+        </a-entity>
+
+        <!-- VR hand controllers (only show up in a headset / emulator) -->
+        <a-entity laser-controls="hand: right" raycaster="objects: .clickable; lineColor: #f0a500"></a-entity>
+        <a-entity laser-controls="hand: left" raycaster="objects: .clickable; lineColor: #f0a500"></a-entity>
+      </a-entity>
+    </a-scene>
+
+    <!-- movement-controls comes from aframe-extras (gives WASD + works in VR) -->
+    <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.4/dist/aframe-extras.min.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>
