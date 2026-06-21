@@ -195,6 +195,13 @@ window.addEventListener("DOMContentLoaded", () => {
       "animation",
       "property: scale; to: 1.15 1 1.15; dir: alternate; dur: 700; loop: true"
     );
+
+    // make sure every cursor/laser raycaster now sees the unlocked defuse pad
+    document.querySelectorAll("[raycaster]").forEach((el) => {
+      if (el.components && el.components.raycaster) {
+        el.components.raycaster.refreshObjects();
+      }
+    });
   }
 
   /* ---------- DEFUSE CLICK ---------- */
