@@ -9,7 +9,7 @@ planted C4 before the round timer runs out.
 
 It's all static files — no build step. Either:
 
-- **Open the live version** (deployed on Vercel — link in the repo description), or
+- **Open the live version** (deployed on Vercel  link in the repo description), or
 - **Run it locally:** from this folder run a tiny web server and open the page.
   A-Frame needs to be served over `http://`, not opened as a `file://`, so:
 
@@ -32,10 +32,10 @@ goggles button bottom-right.
 
 ## What's inside
 
-- `index.html` — the whole A-Frame scene (welcome screen, bombsite, weapon
+- `index.html`  the whole A-Frame scene (welcome screen, bombsite, weapon
   table, info panel, C4, defuse zone, player rig).
-- `css/style.css` — the welcome screen + the HUD overlay.
-- `js/main.js` — the game logic **and** my custom A-Frame component
+- `css/style.css`  the welcome screen + the HUD overlay.
+- `js/main.js`  the game logic **and** my custom A-Frame component
   `inspectable`, which gives any entity the same hover-lift / click-spin /
   "inspected" behaviour on both desktop and VR.
 
@@ -43,7 +43,7 @@ goggles button bottom-right.
 
 The player rig uses `movement-controls` + a raycaster cursor on desktop, and
 A-Frame automatically swaps in the headset camera and `laser-controls` hand
-controllers in VR — so the same scene works as a 2D web page and as an
+controllers in VR  so the same scene works as a 2D web page and as an
 immersive VR experience.
 
 ## Credits / tools
