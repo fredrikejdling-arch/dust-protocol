@@ -7,7 +7,7 @@ planted C4 before the round timer runs out.
 
 ## How to run it
 
-It's all static files — no build step. Either:
+It's all static files  no build step. Either:
 
 - **Open the live version** (deployed on Vercel  link in the repo description), or
 - **Run it locally:** from this folder run a tiny web server and open the page.
