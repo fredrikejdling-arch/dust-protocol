@@ -1,4 +1,4 @@
-# Dust Protocol — A CS2 WebXR Experience
+# Dust Protocol  A CS2 WebXR Experience
 
 A small WebXR experience built with [A-Frame](https://aframe.io/) for the
 *Building Immersive Web Experiences* course. You spawn on a Dust2-style
@@ -32,10 +32,10 @@ goggles button bottom-right.
 
 ## What's inside
 
-- `index.html`  the whole A-Frame scene (welcome screen, bombsite, weapon
+ `index.html`  the whole A-Frame scene (welcome screen, bombsite, weapon
   table, info panel, C4, defuse zone, player rig).
-- `css/style.css`  the welcome screen + the HUD overlay.
-- `js/main.js`  the game logic **and** my custom A-Frame component
+ `css/style.css`  the welcome screen + the HUD overlay.
+ `js/main.js`  the game logic **and** my custom A-Frame component
   `inspectable`, which gives any entity the same hover-lift / click-spin /
   "inspected" behaviour on both desktop and VR.
 
@@ -48,6 +48,6 @@ immersive VR experience.
 
 ## Credits / tools
 
-- A-Frame 1.7.1
-- aframe-extras 7.5.4 (for `movement-controls`)
-- All 3D objects are built from A-Frame primitives (no external models).
+A-Frame 1.7.1
+aframe-extras 7.5.4 (for `movement-controls`)
+All 3D objects are built from A-Frame primitives (no external models).
